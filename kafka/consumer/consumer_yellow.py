@@ -4,12 +4,13 @@ import json
 import time
 
 def get_the_latest_trip_id(session):
-    result = session.execute("SELECT MAX(trip_id) FROM yellow_taxi")
-    max_trip_id = result.one()
-    if max_trip_id[0] is None:  
+    rows = session.execute("SELECT trip_id FROM yellow_taxi")
+    trip_ids = [row.trip_id for row in rows]
+    max_trip_id = sorted(trip_ids)[-1]
+    if max_trip_id is None:  
         return 0
     else:
-        return max_trip_id[0]
+        return max_trip_id
 
 if __name__ == "__main__":
     print("-----------------------------------------------------------------------")
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     print("-----------------------------------------------------------------------")
     print("Start streaming data in yellow-taxi topic")
     start_time = time.time()
-    duration = 1200
+    duration = 24000
     current_id = get_the_latest_trip_id(session)
 
     while True:

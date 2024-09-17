@@ -2,14 +2,15 @@ from kafka import KafkaConsumer
 from cassandra.cluster import Cluster
 import json
 import time
-
+import math
 def get_the_latest_trip_id(session):
-    result = session.execute("SELECT MAX(trip_id) FROM green_taxi")
-    max_trip_id = result.one()
-    if max_trip_id[0] is None:  
+    rows = session.execute("SELECT trip_id FROM green_taxi")
+    trip_ids = [row.trip_id for row in rows]
+    max_trip_id = sorted(trip_ids)[-1]
+    if max_trip_id is None:  
         return 0
     else:
-        return max_trip_id[0]
+        return max_trip_id
 
 
 
@@ -34,7 +35,7 @@ if __name__ == "__main__" :
     print("-----------------------------------------------------------------------")
     print("Start streaming data in green-taxi topic")
     start_time = time.time()
-    duration = 300
+    duration = 10
     current_id = get_the_latest_trip_id(session)
 
     while True:
@@ -76,7 +77,7 @@ if __name__ == "__main__" :
                             data_dict.get('mta_tax'), 
                             data_dict.get('tip_amount'), 
                             data_dict.get('tolls_amount'), 
-                            data_dict.get('ehail_fee'),  
+                            None if (data_dict.get('ehail_fee') is None or (isinstance(data_dict.get('ehail_fee') , float) and math.isnan(data_dict.get('ehail_fee') ))) else data_dict.get('ehail_fee') ,  
                             data_dict.get('improvement_surcharge'),
                             data_dict.get('total_amount'),
                             (data_dict.get('payment_type', 0)) ,
